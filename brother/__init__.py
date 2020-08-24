@@ -28,6 +28,7 @@ class Brother:  # pylint:disable=too-many-instance-attributes
             self._kind = kind
 
         self._legacy = False
+        self._counters_present = None
 
         self.data = {}
 
@@ -39,6 +40,7 @@ class Brother:  # pylint:disable=too-many-instance-attributes
 
         self._snmp_engine = None
         self._oids = tuple(self._iterate_oids(OIDS.values()))
+        self._oids_test = tuple(self._iterate_oids(OIDS_TEST.values()))
 
         _LOGGER.debug("Using host: %s", host)
 
@@ -262,6 +264,33 @@ class Brother:  # pylint:disable=too-many-instance-attributes
                     round(int(item[6:8], 16) / int(item[8:10], 16) * 100),
                 )
 
+    async def _check_counters_present(self):
+        """Check that printer returns counters."""
+
+        if not self._snmp_engine:
+            self._snmp_engine = hlapi.SnmpEngine()
+
+        try:
+            request_args = [
+                self._snmp_engine,
+                hlapi.CommunityData("public", mpModel=0),
+                hlapi.UdpTransportTarget(
+                    (self._host, self._port), timeout=2, retries=10
+                ),
+                hlapi.ContextData(),
+            ]
+            errindication, errstatus, errindex, restable = await hlapi.getCmd(
+                *request_args, *self._oids
+            )
+        except PySnmpError:
+                _LOGGER.debug("jestem na nie")
+                return False
+        else:
+            _LOGGER.debug("jestem na tak")
+            return True
+        finally:
+            # unconfigure SNMP engine
+            lcd.unconfigure(self._snmp_engine, None)
 
 class SnmpError(Exception):
     """Raised when SNMP request ended in error."""

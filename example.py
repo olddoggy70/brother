@@ -16,20 +16,24 @@ async def main():
     # argument kind: laser - for laser printer
     #                ink   - for inkjet printer
     brother = Brother(host, kind=kind)
-    try:
-        await brother.async_update()
-    except (ConnectionError, SnmpError, UnsupportedModel) as error:
-        print(f"{error}")
-        return
 
-    if brother.available:
-        print(f"Data available: {brother.available}")
-        print(f"Model: {brother.model}")
-        print(f"Firmware: {brother.firmware}")
-        if brother.data.get("status"):
-            print(f"Status: {brother.data['status']}")
-        print(f"Serial no: {brother.serial}")
-        print(f"Sensors data: {brother.data}")
+    counters_present = await brother._check_counters_present()
+    print(f"Counters present: {counters_present}")
+
+    # try:
+    #     await brother.async_update()
+    # except (ConnectionError, SnmpError, UnsupportedModel) as error:
+    #     print(f"{error}")
+    #     return
+
+    # if brother.available:
+    #     print(f"Data available: {brother.available}")
+    #     print(f"Model: {brother.model}")
+    #     print(f"Firmware: {brother.firmware}")
+    #     if brother.data.get("status"):
+    #         print(f"Status: {brother.data['status']}")
+    #     print(f"Serial no: {brother.serial}")
+    #     print(f"Sensors data: {brother.data}")
 
 
 loop = asyncio.get_event_loop()
